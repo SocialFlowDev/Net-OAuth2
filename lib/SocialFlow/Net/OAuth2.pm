@@ -11,6 +11,4 @@ SocialFlow::Net::OAuth2 - version holder for SocialFlow's forked Net::OAuth2
 
 =cut
 
-our $VERSION = 0.001;
-
 1;
