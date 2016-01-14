@@ -65,7 +65,7 @@ sub init($)
         $self->{"NOP_${c}_method"} = $args->{$c.'_method'} || 'POST';
         $self->{"NOP_${c}_param"}  = $args->{$c.'_param'}  || [];
     }
-
+    $self->{NOP_build_request_postprocess} = $args->{build_request_postprocess};
     $self;
 }
 
@@ -82,6 +82,8 @@ sub state()      {shift->{NOP_state}}
 sub grant_type() {shift->{NOP_grant_type}}
 
 sub bearer_token_scheme() {shift->{NOP_scheme}}
+
+sub build_request_postprocess() { shift->{NOP_build_request_postprocess} }
 
 #----------------
 
@@ -196,7 +198,14 @@ sub build_request($$$)
     $request->protocol('HTTP/1.1');
     $head->header(Host => $uri->host_port);
     $head->header(Connection => 'Keep-Alive');
-    $request;
+    #coderef will be called in the context of Net::OAuth2
+    #Instagram does not accept the HTTP/1.1 standard of
+    #api.instagram.com:443, so needed to add a munger to set the
+    #Host to api.instagram.com
+    if( my $coderef = $self->build_request_postprocess ) {
+        $self->$coderef($request);
+    }
+    return $request;
 }
 
 
